@@ -1,22 +1,27 @@
 <!DOCTYPE html>
 <html ng-app="lima">
-<head>
-  <title>Lima</title>
+  <head>
+    <title>Lima</title>
 
-  <base href="/" />
+    <base href="/" />
 
-  {% include 'stylesheets.html' %}
-</head>
+    {% include 'stylesheets.html' %}
+  </head>
 
-<body>
-  {% include 'navbar.html' %}
+  <body>
 
-  <div class="container-fluid">
-    <div class="row">
-      <div class="col-xs-12 ng-view"></div>
+    {% include 'navbar.html' %}
+    {% include 'search.html' %}
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-xs-12 ng-view"></div>
+      </div>
     </div>
-  </div>
 
-  {% include 'javascripts.html' %}
-</body>
+
+
+    {% include 'javascripts.html' %}
+
+  </body>
 </html>

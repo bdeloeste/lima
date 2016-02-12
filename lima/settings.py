@@ -114,8 +114,8 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 ALLOWED_HOSTS = ['*']
 
 # MongoDB Setup
-CLIENT = MongoClient('localhost', 27017)
-TRAINING_SET_DB = CLIENT.training_set
+# CLIENT = MongoClient('localhost', 27017)
+# TRAINING_SET_DB = CLIENT.training_set
 
 # Application Server Constants
 APPLICATION_SERVER_HOST = ''
