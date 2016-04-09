@@ -17,11 +17,8 @@ from pymongo import MongoClient, DESCENDING, TEXT
 from threading import Thread, ThreadError
 from time import sleep, time
 from tweepy import API, StreamListener, streaming, OAuthHandler
+from twitter_tokens import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
 
-CONSUMER_KEY = 'QtAh3vSjkQdniyobrxF6armTa'
-CONSUMER_SECRET = 'latUsH07Pz5W7jyp40URwlkNTBnzByX9H8VctaHbP4siDqhjsU'
-ACCESS_TOKEN = '434673129-KAErcwnbmgG2usXPtpxihipjOl0HyTK8Z9T20tFO'
-ACCESS_TOKEN_SECRET = 'oATFryF61579GFKyx2TojscOrUCz4SoDOiAZLkhkrA76f'
 
 AUTH = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 AUTH.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
@@ -40,9 +37,9 @@ class ApplicationStream(StreamListener):
         of the tweet and stores incoming tweet to 'stream_buffer'
         collection.
     """
-    def __init__(self, api):
+    def __init__(self, twitter_api):
         super(StreamListener, self).__init__()
-        self.api = api
+        self.api = twitter_api
 
     def on_data(self, raw_data):
         tweet = loads(raw_data)
