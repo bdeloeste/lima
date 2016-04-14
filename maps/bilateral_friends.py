@@ -25,8 +25,9 @@ class BilateralFriends(object):
     """
 
     def __init__(self, user_id, twitter_api):
-        self.user_id = user_id
         self.api = twitter_api
+        self.user_id = user_id
+        self.user_location = self.api.get_user(self.user_id).location
         self.bilateral_friends = None
         self.followers = []
         self.friends = []
@@ -65,13 +66,15 @@ class BilateralFriends(object):
         """
         return SequenceMatcher(None, a, b).ratio()
 
-    def get_bilateral_friends(self):
+    def get_location_occurrence(self):
         """
-        Checks for
+        TODO: FIX THIS Fi = {<ni, numi> | ni is a noun from location profile of user i's bilateral friends and numi is ni's occurrence number in location profile of i's bilateral friends
 
         Returns: The predicted city and state of the user.
 
         """
+        if len(self.user_location) == 0:
+            return 0
         cursor = tweepy.Cursor(self.api.followers_ids, id=self.user_id).pages()
         for follower in self._limit_handler(cursor=cursor):
             self.followers = follower
@@ -88,51 +91,20 @@ class BilateralFriends(object):
         friends_length = len(self.bilateral_friends)
         print 'Bilateral friends: ', shuffle(self.bilateral_friends)
         print 'Length: ', friends_length
-        possible_results = defaultdict(int)
         count, results_count = 0, 0
+        results = defaultdict(int)
         for user_id in self.bilateral_friends:
             if count == 60:
-                friends_length = count
                 break
             user = self.api.get_user(user_id)
-            location = user.location
-            if len(location) == 0:
-                continue
-            else:
-                print str(len(location)), location
-                count += 1
-                for city in CITIES:
-                    sim = self._similarity_ratio(location, city)
-                    if sim > self._similarity_threshold:
-                        if city == 'Austin' or city == 'ATX':
-                            possible_results['Austin'] += 1
-                        elif city == 'Chicago' or city == 'CHI':
-                            possible_results['Chicago'] += 1
-                        elif city == 'Denver' or city == 'DEN':
-                            possible_results['Denver'] += 1
-                        elif city == 'Los Angeles' or city == 'LA':
-                            possible_results['Austin'] += 1
-                        elif city == 'Las Vegas' or city == 'LV':
-                            possible_results['Las Vegas'] += 1
-                        elif city == 'Miami' or city == 'MIA':
-                            possible_results['Miami'] += 1
-                        elif city == 'New York' or city == 'NY':
-                            possible_results['New York'] += 1
-                        elif city == 'Portland' or city == 'POR':
-                            possible_results['Portland'] += 1
-                        elif city == 'Seattle' or city == 'SEA':
-                            possible_results['Seattle'] += 1
-                        elif city == 'San Fransisco' or city == 'SF':
-                            possible_results['San Fransisco'] += 1
-                        results_count += 1
-        print possible_results
-        guess_threshold = friends_length / 10
-        result = max(possible_results.iteritems(), key=lambda x: x[1])
-        if result[1] > guess_threshold:
-            print 'I predict that', self.user_id, 'is from', result[0]
-            return result[1]
-        print 'Could not guess where user', self.user_id, 'is from'
-        return 'None'
+            location = user.location.lower()
+            if len(location) > 0:
+                results[location] += 1
+                # sim = self._similarity_ratio(location, self.user_location)
+                # if sim > self._similarity_threshold:
+                #     results_count += 1
+            count += 1
+        return results
 
 
 if __name__ == '__main__':
@@ -140,5 +112,5 @@ if __name__ == '__main__':
     auth.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
     api = tweepy.API(auth)
     bilateral_friends = BilateralFriends(user_id='434673129', twitter_api=api)
-    bilateral_friends.get_bilateral_friends()
+    print bilateral_friends.get_location_occurrence()
     print api.rate_limit_status()['resources']['users']

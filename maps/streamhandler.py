@@ -11,14 +11,17 @@
 
 import sys
 
+from bilateral_friends import BilateralFriends
+from collections import defaultdict
 from json import loads
+from nltk import pos_tag
+from nltk.tokenize import TweetTokenizer
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from pymongo import MongoClient, DESCENDING, TEXT
 from threading import Thread, ThreadError
 from time import sleep, time
 from tweepy import API, StreamListener, streaming, OAuthHandler
 from twitter_tokens import CONSUMER_KEY, CONSUMER_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET
-
 
 AUTH = OAuthHandler(CONSUMER_KEY, CONSUMER_SECRET)
 AUTH.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
@@ -37,9 +40,12 @@ class ApplicationStream(StreamListener):
         of the tweet and stores incoming tweet to 'stream_buffer'
         collection.
     """
+
     def __init__(self, twitter_api):
         super(StreamListener, self).__init__()
+        self.all_nouns = set([])
         self.api = twitter_api
+        self.corpus = {}
 
     def on_data(self, raw_data):
         tweet = loads(raw_data)
@@ -47,6 +53,17 @@ class ApplicationStream(StreamListener):
             text = tweet['text']
             if tweet.get('retweeted_status') is None and 'RT @' not in text:
                 if 'coordinates' not in tweet:
+                    # TODO: Check for rate limit. If rate limited, then perform location inference
+                    nouns = self._get_nouns(tweet_text=text)
+                    bf = BilateralFriends(user_id=tweet['user']['id'], twitter_api=self.api)
+                    loc_occurrence_count = bf.get_location_occurrence()
+                    tweet_nouns = defaultdict(int)
+                    for noun in nouns:
+                        tweet_nouns[noun] += 1
+                    self.corpus[tweet['user']['id']] = {'location': tweet['user']['location'],
+                                                        'bilateral_friends_location_occurrences': loc_occurrence_count,
+                                                        'text_nouns': tweet_nouns}
+                    self.all_nouns.add(nouns)
                     print 'needs location inference'
                 sentiment_analyzer = SentimentIntensityAnalyzer()
                 sentiment_score = sentiment_analyzer.polarity_scores(text=text)['compound']
@@ -57,6 +74,23 @@ class ApplicationStream(StreamListener):
                 STREAM_BUFFER.insert(tweet)
         except KeyError, v:
             print 'KeyError: ', v
+
+    @staticmethod
+    def _get_nouns(tweet_text):
+        """
+
+        Args:
+            tweet_text:
+
+        Returns:
+
+        """
+        tokenizer = TweetTokenizer()
+        nouns = []
+        for tweet in tweet_text:
+            tag = pos_tag(tokenizer.tokenize(tweet))
+            nouns.extend([t[0] for t in tag if t[1] == 'NN' or t[1] == 'NNP'])
+        return nouns
 
 
 def reindex_thread():
