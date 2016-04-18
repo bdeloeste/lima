@@ -14,6 +14,7 @@ import sys
 from bilateral_friends import BilateralFriends
 from collections import defaultdict
 from json import loads
+from location_inference import LocationInference
 from nltk import pos_tag
 from nltk.tokenize import TweetTokenizer
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -29,8 +30,21 @@ AUTH.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 CLIENT = MongoClient('localhost', 27017)
 TRAINING_SET_DB = CLIENT['test']
 STREAM_BUFFER = TRAINING_SET_DB['stream_buffer']
+LOCATION_WORDS = TRAINING_SET_DB['location_words']
 
 CONTINENTAL_AMERICA = [-125.0011, 24.9493, -66.9326, 49.5904]
+LOCATIONS = {
+    'Austin': [30.25, -97.75],
+    'Chicago': [41.8369, -87.6847],
+    'Denver': [39.849, -104.673],
+    'Los Angeles': [34.052, -115.173],
+    'Las Vegas': [36.114, -115.173],
+    'Miami': [25.762, -80.19],
+    'New York': [40.7127, -74.0059],
+    'Portland': [45.523, -122.68],
+    'Seattle': [47.6062, -122.3321],
+    'San Fransisco': [37.7833, -122.4167]
+}
 
 
 class ApplicationStream(StreamListener):
@@ -41,11 +55,12 @@ class ApplicationStream(StreamListener):
         collection.
     """
 
-    def __init__(self, twitter_api):
+    def __init__(self, twitter_api, local_words, geo_words):
         super(StreamListener, self).__init__()
-        self.all_nouns = set([])
         self.api = twitter_api
         self.corpus = {}
+        self.local_words = local_words
+        self.geo_words = geo_words
 
     def on_data(self, raw_data):
         tweet = loads(raw_data)
@@ -55,16 +70,21 @@ class ApplicationStream(StreamListener):
                 if 'coordinates' not in tweet:
                     # TODO: Check for rate limit. If rate limited, then perform location inference
                     nouns = self._get_nouns(tweet_text=text)
-                    bf = BilateralFriends(user_id=tweet['user']['id'], twitter_api=self.api)
-                    loc_occurrence_count = bf.get_location_occurrence()
+                    # bf = BilateralFriends(user_id=tweet['user']['id'], twitter_api=self.api)
+                    # loc_occurrence_count = bf.get_location_occurrence()
                     tweet_nouns = defaultdict(int)
                     for noun in nouns:
                         tweet_nouns[noun] += 1
-                    self.corpus[tweet['user']['id']] = {'location': tweet['user']['location'],
-                                                        'bilateral_friends_location_occurrences': loc_occurrence_count,
+                    self.corpus[tweet['user']['id']] = {'id': tweet['user']['id'],
+                                                        'location': tweet['user']['location'],
+                                                        # 'bilateral_friends_location_occurrences': loc_occurrence_count,
                                                         'text_nouns': tweet_nouns}
-                    self.all_nouns.add(nouns)
-                    print 'needs location inference'
+                    loc_inf = LocationInference(user=self.corpus[tweet['user']['id']], local_words=self.local_words,
+                                                geo_words=self.geo_words)
+                    inferred_location = loc_inf.get_location()
+                    print 'Predicted location:', inferred_location[0]
+                    tweet['coordinates'] = {'type': 'Point', 'coordinates': [LOCATION_WORDS[inferred_location[0]][1],
+                                                                             LOCATION_WORDS[inferred_location[0]][0]]}
                 sentiment_analyzer = SentimentIntensityAnalyzer()
                 sentiment_score = sentiment_analyzer.polarity_scores(text=text)['compound']
                 tweet['sentiment'] = sentiment_score
@@ -86,10 +106,10 @@ class ApplicationStream(StreamListener):
 
         """
         tokenizer = TweetTokenizer()
+        tokenizer.tokenize(tweet_text)
         nouns = []
-        for tweet in tweet_text:
-            tag = pos_tag(tokenizer.tokenize(tweet))
-            nouns.extend([t[0] for t in tag if t[1] == 'NN' or t[1] == 'NNP'])
+        tag = pos_tag(tokenizer.tokenize(tweet_text))
+        nouns.extend([t[0] for t in tag if t[1] == 'NN' or t[1] == 'NNP'])
         return nouns
 
 
@@ -121,8 +141,19 @@ if __name__ == '__main__':
         keywords = sys.argv[1:]
     except TypeError:
         print >> sys.stderr, "Caught TypeError"
+
+    print 'Loading local words'
+    local_words = LOCATION_WORDS.find()
+    local_words.pop('_id', None)
+    print 'Done!'
+    print 'Setting geo words'
+    geo_words = {}
+    for location in LOCATIONS.iterkeys():
+        geo_words[location] = set(local_words[location].keys())
+        geo_words[location].add(location)
+    print 'Done!'
     api = API(AUTH)
-    stream = streaming.Stream(AUTH, ApplicationStream(api))
+    stream = streaming.Stream(AUTH, ApplicationStream(api, local_words, geo_words))
 
     if STREAM_BUFFER.count() > 0:
         try:

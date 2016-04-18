@@ -20,7 +20,8 @@ class TFDFIDF(object):
         """
 
         Args:
-            corpus: { 'location': tweet['user']['location'],
+            corpus: { 'id': tweet['user']['id'],
+                      'location': tweet['user']['location'],
                       'bilateral_friends_location_occurrences': loc_occurrence_count,
                       'text_nouns': tweet_nouns }
         """
@@ -42,7 +43,9 @@ class TFDFIDF(object):
 
         """
         G = len(self.gazetteer_words)
+        tfdfidf_set = {}
         for g in self.gazetteer_words:
+            tfdfidf_g = {}
             for noun in self.all_nouns:
                 Ng_n = self._ng_n(noun=noun, location=g)
                 Ng = self._ng(location=g)
@@ -55,7 +58,12 @@ class TFDFIDF(object):
                 NLg = self._nlg_n(noun=noun, location=g)
                 idf = log(G / (1 + NLg))
                 tfdfidf = tf * df * idf
+                if tfdfidf > 0:
+                    tfdfidf_g[noun] = tfdfidf
                 print g, ':', noun, ': ', 'tfdfidf: ', tfdfidf
+            tfdfidf_set[g] = tfdfidf_g
+        print tfdfidf_set
+        return tfdfidf_set
 
     def _ng_n(self, noun, location):
         """

@@ -19,6 +19,7 @@
     "jquery": "~2.1.1",
     "ngDialog": "~0.3.3",
     "underscore": "~1.7.0",
-    "pusher-angular": "^0.1.9"
+    "pusher-angular": "^0.1.9",
+    "angular-google-maps": "^2.3.2"
   }
 }
