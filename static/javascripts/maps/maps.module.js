@@ -8,7 +8,7 @@
     ]);
 
     angular
-      .module('lima.maps.controllers', []);
+      .module('lima.maps.controllers', ['pusher-angular', 'uiGmapgoogle-maps']);
 
     angular
       .module('lima.maps.services', []);

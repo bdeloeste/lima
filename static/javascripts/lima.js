@@ -16,7 +16,7 @@
       .module('lima.routes', ['ngRoute']);
 
     angular
-      .module('lima.controller', ['pusher-angular']);
+      .module('lima.controller', ['pusher-angular', 'uiGmapgoogle-maps']);
 
     angular
       .module('lima')
