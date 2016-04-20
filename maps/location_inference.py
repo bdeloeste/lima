@@ -5,6 +5,7 @@ Author: Bryan Deloeste
 Source: http://www.jcomputers.us/vol9/jcp0902-09.pdf
 """
 from collections import defaultdict
+from json import loads
 from math import log
 
 
@@ -18,7 +19,7 @@ class LocationInference(object):
                      'bilateral_friends_location_occurrences': loc_occurrence_count,
                      'text_nouns': tweet_nouns }
         """
-        self._delta = 10.0
+        self._delta = 30.0
         self._lambda = 1.0
         self.user = user
         self.gazetteer_words = {'Austin', 'Chicago', 'Denver', 'Los Angeles', 'Las Vegas', 'Miami', 'New York',
@@ -38,7 +39,7 @@ class LocationInference(object):
                 if geo in self.gazetteer_words:
                     weight_g = 1
                 elif geo in self.local_words[g]:
-                    weight_g = log(self.local_words[g][geo] * self._delta)
+                    weight_g = log(loads(self.local_words[g])[geo] * self._delta)
                 else:
                     weight_g = 0
                 # t_count = self._r(geo=geo, tuple_set='bilateral', location=g)

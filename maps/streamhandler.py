@@ -13,7 +13,7 @@ import sys
 
 from bilateral_friends import BilateralFriends
 from collections import defaultdict
-from json import loads
+from json import dumps, loads
 from location_inference import LocationInference
 from nltk import pos_tag
 from nltk.tokenize import TweetTokenizer
@@ -29,8 +29,9 @@ AUTH.set_access_token(ACCESS_TOKEN, ACCESS_TOKEN_SECRET)
 
 CLIENT = MongoClient('localhost', 27017)
 TRAINING_SET_DB = CLIENT['test']
-STREAM_BUFFER = TRAINING_SET_DB['stream_buffer']
-LOCATION_WORDS = TRAINING_SET_DB['location_words']
+TSET_DB = CLIENT['training_set']
+STREAM_BUFFER = TSET_DB['stream_buffer']
+LOCATION_WORDS = TSET_DB['location_words']
 
 CONTINENTAL_AMERICA = [-125.0011, 24.9493, -66.9326, 49.5904]
 LOCATIONS = {
@@ -67,7 +68,7 @@ class ApplicationStream(StreamListener):
         try:
             text = tweet['text']
             if tweet.get('retweeted_status') is None and 'RT @' not in text:
-                if 'coordinates' not in tweet:
+                if tweet.get('coordinates') is None:
                     # TODO: Check for rate limit. If rate limited, then perform location inference
                     nouns = self._get_nouns(tweet_text=text)
                     # bf = BilateralFriends(user_id=tweet['user']['id'], twitter_api=self.api)
@@ -82,9 +83,11 @@ class ApplicationStream(StreamListener):
                     loc_inf = LocationInference(user=self.corpus[tweet['user']['id']], local_words=self.local_words,
                                                 geo_words=self.geo_words)
                     inferred_location = loc_inf.get_location()
+                    print inferred_location
                     print 'Predicted location:', inferred_location[0]
-                    tweet['coordinates'] = {'type': 'Point', 'coordinates': [LOCATION_WORDS[inferred_location[0]][1],
-                                                                             LOCATION_WORDS[inferred_location[0]][0]]}
+                    tweet['coordinates'] = {'type': 'Point', 'coordinates': [LOCATIONS[inferred_location[0]][1],
+                                                                             LOCATIONS[inferred_location[0]][0]]}
+                    print tweet['coordinates']
                 sentiment_analyzer = SentimentIntensityAnalyzer()
                 sentiment_score = sentiment_analyzer.polarity_scores(text=text)['compound']
                 tweet['sentiment'] = sentiment_score
@@ -143,13 +146,15 @@ if __name__ == '__main__':
         print >> sys.stderr, "Caught TypeError"
 
     print 'Loading local words'
-    local_words = LOCATION_WORDS.find()
+    local_words = LOCATION_WORDS.find_one()
     local_words.pop('_id', None)
+    print local_words
     print 'Done!'
     print 'Setting geo words'
     geo_words = {}
     for location in LOCATIONS.iterkeys():
-        geo_words[location] = set(local_words[location].keys())
+        loc = loads(local_words[location])
+        geo_words[location] = set(loc.keys())
         geo_words[location].add(location)
     print 'Done!'
     api = API(AUTH)

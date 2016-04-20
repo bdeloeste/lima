@@ -116,7 +116,7 @@ ALLOWED_HOSTS = ['*']
 
 # MongoDB Setup
 CLIENT = MongoClient('localhost', 27017)
-TRAINING_SET_DB = CLIENT.test
+TRAINING_SET_DB = CLIENT['training_set']
 
 # Twitter Application Setup
 CONSUMER_KEY = 'QtAh3vSjkQdniyobrxF6armTa'
