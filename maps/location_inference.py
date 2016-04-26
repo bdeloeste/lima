@@ -7,6 +7,7 @@ Source: http://www.jcomputers.us/vol9/jcp0902-09.pdf
 from collections import defaultdict
 from json import loads
 from math import log
+from random import sample
 
 
 class LocationInference(object):
@@ -46,8 +47,11 @@ class LocationInference(object):
                 f_count = self._r(geo=geo, tuple_set='tweet')
                 w_g_geo = self._lambda * weight_g * f_count
                 g_weights[g] += w_g_geo
-        print g_weights
-        return max(g_weights.items(), key=lambda x: x[1])
+        # print g_weights
+        result = max(g_weights.items(), key=lambda x: x[1])
+        if result[1] == 0:
+            return sample(population=self.gazetteer_words, k=1)
+        return result
 
     def _r(self, geo, tuple_set):
         """

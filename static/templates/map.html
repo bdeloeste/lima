@@ -1,22 +1,26 @@
-<!--<div id="map"></div>-->
-<!--<script>-->
-  <!--var map;-->
-  <!--var sanFransiscoLatLong = {lat: 37.7833, lng: -122.4167};-->
-  <!--function initMap() {-->
-    <!--map = new google.maps.Map(document.getElementById('map'), {-->
-      <!--center: sanFransiscoLatLong,-->
-      <!--zoom: 8-->
-    <!--});-->
-  <!--}-->
-<!--</script>-->
-<!--<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB2_mHJ-X0M2GHQHVOew0URYiMXz0VIxq0&callback=initMap"-->
-<!--async defer></script>-->
-
 <div ng-controller="LayerHeatmapCtrl">
   <ui-gmap-google-map
     center='map.center'
     zoom='map.zoom'
-    draggable="true">
+    draggable="true"
+  >
+    <!--<ui-gmap-markers models="randomMarkers" coords="'self'" icon="'icon'" click="'onClicked'" fit="true" doCluster="true"></ui-gmap-markers>-->
     <ui-gmap-circle ng-repeat="c in circles track by c.id" center="c.center" stroke="c.stroke" fill="c.fill" radius="c.radius"></ui-gmap-circle>
+    <ui-gmap-markers models="randomMarkers" coords="'self'" icon="'icon'" click="'onClicked'" fit="true" doCluster="true">
+      <ui-gmap-window coords="window.coords" show="true">
+        <div>
+          <h4>{{title}}</h4>
+          <p>
+            Keyword searched: {{blab}}
+          </p>
+          <p>
+            Tweets collected: {{tweetsCollected}}
+          </p>
+          <p>
+            Average sentiment: {{averageSentiment}}
+          </p>
+        </div>
+      </ui-gmap-window>
+    </ui-gmap-markers>
   </ui-gmap-google-map>
 </div>

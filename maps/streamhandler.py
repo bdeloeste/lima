@@ -13,12 +13,14 @@ import sys
 
 from bilateral_friends import BilateralFriends
 from collections import defaultdict
+from urllib3.exceptions import ProtocolError
 from json import dumps, loads
 from location_inference import LocationInference
 from nltk import pos_tag
 from nltk.tokenize import TweetTokenizer
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from pymongo import MongoClient, DESCENDING, TEXT
+from random import sample
 from threading import Thread, ThreadError
 from time import sleep, time
 from tweepy import API, StreamListener, streaming, OAuthHandler
@@ -172,4 +174,7 @@ if __name__ == '__main__':
     while True:
         print 'Starting new stream'
         if keywords is not None:
-            stream.filter(languages=['en'], locations=CONTINENTAL_AMERICA)
+            try:
+                stream.filter(languages=['en'], locations=CONTINENTAL_AMERICA)
+            except:
+                continue

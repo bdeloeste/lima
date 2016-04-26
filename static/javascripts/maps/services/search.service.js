@@ -31,9 +31,6 @@
         function success(data, status, headers, config) {
             console.log("i made it mom");
             Search.template = "/static/templates/map.html";
-            $(window).resize(function() {
-                $('#map').height($(window).height());
-            }).resize();
         }
 
         function error(data, status, headers, config) {

@@ -16,7 +16,21 @@
     var pusher = $pusher(client);
     var data_queue = new Queue();
     var ids = 1;
+    var totalSentiment = 0;
+    $scope.title = "Location Inference Data";
+    $scope.tweetsCollected = 0;
+    $scope.averageSentiment = 0;
     $scope.circles = [];
+    $scope.randomMarkers = [];
+    $scope.window = {
+        'coords': {
+            latitude: 20.8859,
+            longitude: -130.4629
+        }
+    };
+    $scope.windowOptions = {
+        visible: true
+    };
     pusher.subscribe('lima');
     pusher.bind('tweet_stream',
       function(data) {
@@ -29,6 +43,9 @@
         };
         console.log(locData);
         data_queue.enqueue(locData);
+        $scope.tweetsCollected += 1;
+        totalSentiment += data.data.sentiment;
+        $scope.averageSentiment = (totalSentiment / $scope.tweetsCollected).toFixed(4);
         // console.log(data_queue);
       });      
     uiGmapGoogleMapApi.then(function(maps){
@@ -41,13 +58,16 @@
         center: {
           latitude: 37.09024,
           longitude: -95.712891
-        }, zoom: 4
+        },
+        zoom: 4
       };
     });
 
     function MockHeatLayer() {
       // console.log('ah');
       // var pointArray = tweetData.getPoints();
+      // testmarkers();
+      // testCircles();
       if (!(data_queue.isEmpty())) {
           console.log('Setting circles');
           setCircles(data_queue);
@@ -60,8 +80,48 @@
       return 'hsl(' + hue + ', 100%, 50%)';
     }
 
+    function testmarkers() {
+      $scope.randomMarkers = [
+            { //San Francisco
+              id: 1,
+              latitude: 37.7833,
+              longitude: -122.4167
+            },
+            { //Chicago
+              id: 2,
+              latitude: 41.8369,
+              longitude: -87.6847
+            },
+            { //NYC
+              id: 3,
+              latitude: 40.1727,
+              longitude: -74.0059
+            },
+            { //Austin
+                id: 4,
+                latitude: 30.25,
+                longitude: -97.75
+            },
+            { //Austin
+                id: 5,
+                latitude: 30.26,
+                longitude: -97.75
+            },
+            { //Austin
+                id: 6,
+                latitude: 30.27,
+                longitude: -97.75
+            },
+            { //Austin
+                id: 7,
+                latitude: 30.26,
+                longitude: -97.8
+            }
+          ];
+    }
+
     function testCircles() {
-        for (var i = 0; i < 50; i++) {
+        for (var i = 0; i < 3; i++) {
             var circleObject = {
                 id: ids,
                 center: {
@@ -105,80 +165,16 @@
                     opacity: 0.5
                 }
             };
+            var markerObject = {
+                id: ids,
+                latitude: dataInfo['coordinates'][1],
+                longitude: dataInfo['coordinates'][0]
+            };
             $scope.circles.push(circleObject);
+            $scope.randomMarkers.push(markerObject);
             ids += 1;
         }
 
-      // $scope.circles = [
-      //       { //San Francisco
-      //         id: 1,
-      //         center: {
-      //             latitude: 37.7833,
-      //             longitude: -122.4167
-      //         },
-      //         radius: 100000,
-      //         stroke: {
-      //             color: getColor(sf),
-      //             weight: 2,
-      //             opacity: 1
-      //         },
-      //         fill: {
-      //             color: getColor(sf),
-      //             opacity: 0.5
-      //         }
-      //       },
-      //       { //Chicago
-      //         id: 2,
-      //         center: {
-      //             latitude: 41.8369,
-      //             longitude: -87.6847
-      //         },
-      //         radius: 100000,
-      //         stroke: {
-      //             color: getColor(chi),
-      //             weight: 2,
-      //             opacity: 1
-      //         },
-      //         fill: {
-      //             color: getColor(chi),
-      //             opacity: 0.5
-      //         }
-      //       },
-      //       { //NYC
-      //         id: 3,
-      //         center: {
-      //             latitude: 40.1727,
-      //             longitude: -74.0059
-      //         },
-      //         radius: 100000,
-      //         stroke: {
-      //             color: getColor(nyc),
-      //             weight: 2,
-      //             opacity: 1
-      //         },
-      //         fill: {
-      //             color: getColor(nyc),
-      //             opacity: 0.5
-      //         }
-      //       },
-      //       { //Austin
-      //           id: 4,
-      //           center: {
-      //               latitude: 30.25,
-      //               longitude: -97.75
-      //           },
-      //           radius: 100000,
-      //           stroke: {
-      //               color: getColor(atx),
-      //               weight: 2,
-      //               opacity: 1
-      //           },
-      //           fill: {
-      //               color: getColor(atx),
-      //               opacity: 0.5
-      //           }
-      //         }
-      //     ];
-  }
+    }
   }
 })();

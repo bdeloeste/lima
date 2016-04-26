@@ -1,3 +1,8 @@
+body, html {
+    height: 100%;
+    width: 100%;
+}
+
 form {
 	width: 300px;
     margin: 200px auto 0;
@@ -8,6 +13,9 @@ form {
 }
 
 .navbar {
+  -webkit-box-shadow: 0 8px 6px -6px #999;
+  -moz-box-shadow: 0 8px 6px -6px #999;
+  box-shadow: 0 8px 6px -6px #999;
   margin-bottom: 0;
   background-color: #000;
 }
@@ -17,4 +25,6 @@ form {
     width: 100%;
 }
 
-.angular-google-map-container { height: 600px; }
+.angular-google-map-container {
+    height: 990px;
+}
