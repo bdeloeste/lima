@@ -27,4 +27,4 @@ six==1.8.0
 static3==0.5.1
 tweepy==3.3.0
 twython==3.3.0
-urllib3==1.14
+urllib3==1.26.5
